@@ -30,14 +30,16 @@ app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 // ============================================
 // ROTAS DA API
 // ============================================
-const authRoutes     = require('./routes/authRoutes.js');
-const triagemRoutes  = require('./routes/triagemroutes.js');
-const casosRoutes    = require('./routes/casosRoutes.js');
-const chatRoutes     = require('./routes/chatRoutes.js');
-const adminRoutes    = require('./routes/adminRoutes.js');
+const authRoutes      = require('./routes/authRoutes');
+const triagemRoutes   = require('./routes/triagemRoutes');
+const casosRoutes     = require('./routes/casosRoutes');
+const chatRoutes      = require('./routes/chatRoutes');
+const adminRoutes     = require('./routes/adminRoutes');
+const advogadosRoutes = require('./routes/advogadosRoutes');
 
-app.use('/api/auth',     authRoutes);
-app.use('/api/triagem',  triagemRoutes);
+app.use('/api/auth',      authRoutes);
+app.use('/api/triagem',   triagemRoutes);
+app.use('/api/advogados', advogadosRoutes);
 app.use('/api/casos',    casosRoutes);
 app.use('/api/admin',    adminRoutes);
 

@@ -24,7 +24,6 @@ import Requisicoes      from './pages/lawyer/Requisicoes.jsx'
 import ChatCasoLawyer   from './pages/lawyer/ChatCasoLawyer.jsx'
 import AdminPanel       from './pages/lawyer/AdminPanel.jsx'
 
-
 export default function App() {
   const { isAuthenticated, user } = useAuth()
 

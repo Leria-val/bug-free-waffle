@@ -1,61 +1,67 @@
-// src/components/Sidebar.jsx
-import { NavLink } from 'react-router-dom'
-import { useAuth } from '../context/AuthContext'
+// src/components/Stepper.jsx
+// Barra de progresso do status do processo.
+// Usado tanto no painel do advogado (clicável, muda status)
+// quanto no painel do cliente (somente leitura).
 
-const CLIENT_LINKS = [
-  { to: '/client/dashboard',  label: 'Meu Painel',    icon: '⊞' },
-  { to: '/client/triagem',    label: 'Meu Caso',       icon: '📋' },
-  { to: '/client/chat',       label: 'Chat Seguro',    icon: '💬' },
-  { to: '/client/documentos', label: 'Arquivos',       icon: '📁' },
-  { to: '/advogados',         label: 'Advogados',      icon: '⚖' },
-]
+const LABELS = {
+  TRIAGEM:      'Triagem',
+  ANALISE:      'Em Análise',
+  EM_ANDAMENTO: 'Em Andamento',
+  CONCLUIDO:    'Concluído',
+  ARQUIVADO:    'Arquivado',
+}
 
-const LAWYER_LINKS = [
-  { to: '/lawyer/dashboard',   label: 'Painel',         icon: '⊞' },
-  { to: '/lawyer/requisicoes', label: 'Requisições',    icon: '📬' },
-  { to: '/lawyer/casos',       label: 'Meus Casos',     icon: '📋' },
-  { to: '/lawyer/chat',        label: 'Chat Seguro',    icon: '💬' },
-  { to: '/lawyer/arquivos',    label: 'Arquivos',       icon: '📁' },
-]
-
-const ADMIN_LINKS = [
-  { to: '/admin',              label: 'Painel Admin',   icon: '⊞' },
-  { to: '/admin/usuarios',     label: 'Usuários',       icon: '👤' },
-  { to: '/admin/casos',        label: 'Todos os Casos', icon: '📋' },
-  { to: '/admin/relatorio',    label: 'Relatório',      icon: '📊' },
-]
-
-export default function Sidebar() {
-  const { isClient, isLawyer, isAdmin } = useAuth()
-  const links = isAdmin ? ADMIN_LINKS : isLawyer ? LAWYER_LINKS : CLIENT_LINKS
+export default function Stepper({ steps, current, onChange, disabled }) {
+  const currentIndex = steps.indexOf(current)
 
   return (
-    <aside style={{
-      width: 220, flexShrink: 0,
-      borderRight: '1px solid var(--border)',
-      padding: '32px 0',
-      display: 'flex', flexDirection: 'column', gap: 4,
-    }}>
-      {links.map(({ to, label, icon }) => (
-        <NavLink
-          key={to}
-          to={to}
-          style={({ isActive }) => ({
-            display: 'flex', alignItems: 'center', gap: 10,
-            padding: '10px 24px',
-            fontSize: 13,
-            color: isActive ? 'var(--gold)' : 'var(--text-2)',
-            background: isActive ? 'rgba(201,168,76,0.07)' : 'transparent',
-            borderRight: isActive ? '2px solid var(--gold)' : '2px solid transparent',
-            textDecoration: 'none',
-            transition: 'all var(--transition)',
-            letterSpacing: '0.02em',
-          })}
-        >
-          <span style={{ fontSize: 14 }}>{icon}</span>
-          {label}
-        </NavLink>
-      ))}
-    </aside>
+    <div style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
+      {steps.map((step, i) => {
+        const isDone    = i < currentIndex
+        const isActive  = i === currentIndex
+        const isFuture  = i > currentIndex
+        const clickable = typeof onChange === 'function' && !disabled
+
+        return (
+          <div key={step} style={{ display: 'flex', alignItems: 'center', flex: i < steps.length - 1 ? 1 : 'none' }}>
+            <button
+              type="button"
+              disabled={!clickable}
+              onClick={() => clickable && onChange(step)}
+              title={LABELS[step] || step}
+              style={{
+                width: 28, height: 28, borderRadius: '50%',
+                border: `2px solid ${isDone || isActive ? 'var(--gold, #d4af37)' : 'var(--border, #2e2e2e)'}`,
+                background: isDone ? 'var(--gold, #d4af37)' : isActive ? 'rgba(212,175,55,0.15)' : 'transparent',
+                color: isDone ? '#080808' : isActive ? 'var(--gold, #d4af37)' : 'var(--text-3, #5a5545)',
+                fontSize: 11, fontWeight: 600,
+                cursor: clickable ? 'pointer' : 'default',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                flexShrink: 0, transition: 'all 0.2s ease',
+              }}
+            >
+              {isDone ? '✓' : i + 1}
+            </button>
+
+            <span style={{
+              marginLeft: 6, marginRight: i < steps.length - 1 ? 6 : 0,
+              fontSize: 11, whiteSpace: 'nowrap',
+              color: isActive ? 'var(--gold, #d4af37)' : isDone ? 'var(--text-1, #f0ede6)' : 'var(--text-3, #5a5545)',
+              fontWeight: isActive ? 600 : 400,
+            }}>
+              {LABELS[step] || step}
+            </span>
+
+            {i < steps.length - 1 && (
+              <div style={{
+                flex: 1, height: 2, minWidth: 16,
+                background: isDone ? 'var(--gold, #d4af37)' : 'var(--border, #2e2e2e)',
+                transition: 'background 0.2s ease',
+              }} />
+            )}
+          </div>
+        )
+      })}
+    </div>
   )
 }

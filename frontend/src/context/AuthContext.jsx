@@ -1,5 +1,8 @@
+// src/context/Authcontext.js
+
 import { createContext, useContext, useState, useEffect } from 'react';
 import api from '../services/api.js';
+
 
 const AuthContext = createContext(null);
 
@@ -52,9 +55,10 @@ export function AuthProvider({ children }) {
   const isAdmin  = () => user?.role === 'ADMIN';
   const isLawyer = () => user?.role === 'LAWYER' || user?.role === 'ADMIN';
   const isClient = () => user?.role === 'CLIENT';
+  const isAuthenticated = !!user;
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, verifyMfa, register, logout, isAdmin, isLawyer, isClient }}>
+    <AuthContext.Provider value={{ user, loading, login, verifyMfa, register, logout, isAdmin, isLawyer, isClient, isAuthenticated }}>
       {children}
     </AuthContext.Provider>
   );

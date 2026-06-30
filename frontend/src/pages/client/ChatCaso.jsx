@@ -20,6 +20,9 @@ export default function ChatCaso() {
   const [docs, setDocs]     = useState([])
   const [text, setText]     = useState('')
   const [sending, setSending] = useState(false)
+  const [uploading, setUploading] = useState(false)
+  const [uploadError, setUploadError] = useState('')
+  const fileInputRef        = useRef()
   const bottomRef           = useRef()
   const navigate            = useNavigate()
 
@@ -56,6 +59,41 @@ export default function ChatCaso() {
   }
 
   const activeCase = cases.find(c => c.id === activeId)
+
+  const uploadDocument = async (e) => {
+    const file = e.target.files?.[0]
+    if (!file || !activeId) return
+
+    setUploadError('')
+
+    // Validação no front: 50MB, PDF ou imagem (espelha o multer do backend)
+    const allowed = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp']
+    if (!allowed.includes(file.type)) {
+      setUploadError('Apenas PDF ou imagens são permitidos.')
+      e.target.value = ''
+      return
+    }
+    if (file.size > 50 * 1024 * 1024) {
+      setUploadError('Arquivo muito grande. Máximo 50MB.')
+      e.target.value = ''
+      return
+    }
+
+    setUploading(true)
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      const res = await api.post(`/casos/${activeId}/documentos`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
+      setDocs(d => [res.data.document, ...d])
+    } catch (err) {
+      setUploadError(err.response?.data?.error || 'Erro ao enviar arquivo.')
+    } finally {
+      setUploading(false)
+      e.target.value = ''
+    }
+  }
 
   return (
     <div className="page-wrapper">
@@ -99,18 +137,35 @@ export default function ChatCaso() {
                 <CryptoBadge />
               </div>
 
-              {/* Documentos */}
-              {docs.length > 0 && (
-                <div style={{ padding:'10px 24px', borderBottom:'1px solid var(--border)', display:'flex', gap:8, flexWrap:'wrap' }}>
-                  {docs.map(d => (
-                    <span key={d.id} style={{
-                      padding:'3px 10px', background:'var(--bg-3)',
-                      border:'1px solid var(--border)', borderRadius:4,
-                      fontSize:11, color:'var(--text-2)',
-                    }}>📄 {d.file_name}</span>
-                  ))}
-                </div>
-              )}
+              {/* Documentos + upload */}
+              <div style={{ padding:'10px 24px', borderBottom:'1px solid var(--border)', display:'flex', gap:8, flexWrap:'wrap', alignItems:'center' }}>
+                {docs.map(d => (
+                  <span key={d.id} style={{
+                    padding:'3px 10px', background:'var(--bg-3)',
+                    border:'1px solid var(--border)', borderRadius:4,
+                    fontSize:11, color:'var(--text-2)',
+                  }}>📄 {d.file_name}</span>
+                ))}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".pdf,image/png,image/jpeg,image/webp"
+                  onChange={uploadDocument}
+                  style={{ display:'none' }}
+                />
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-sm"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploading}
+                  style={{ fontSize: 11 }}
+                >
+                  {uploading ? 'Enviando...' : '+ Anexar documento'}
+                </button>
+                {uploadError && (
+                  <span style={{ fontSize: 11, color: '#ef5350' }}>{uploadError}</span>
+                )}
+              </div>
 
               {/* Mensagens */}
               <div style={{ flex:1, overflowY:'auto', padding:'24px', display:'flex', flexDirection:'column', gap:12 }}>

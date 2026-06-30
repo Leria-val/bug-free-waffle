@@ -1,7 +1,7 @@
 // src/models/Usuario.js
 // Helpers de queries para a tabela users
 
-const { query } = require('../config/database,js');
+const { query } = require('../config/database.js');
 const bcrypt = require('bcryptjs');
 
 const Usuario = {
