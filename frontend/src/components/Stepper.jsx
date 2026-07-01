@@ -11,7 +11,7 @@ const LABELS = {
   ARQUIVADO:    'Arquivado',
 }
 
-export default function Stepper({ steps, current, onChange, disabled }) {
+function Stepper({ steps, current, onChange, disabled }) {
   const currentIndex = steps.indexOf(current)
 
   return (
@@ -65,3 +65,7 @@ export default function Stepper({ steps, current, onChange, disabled }) {
     </div>
   )
 }
+-e
+
+export { Stepper }
+export default Stepper

@@ -7,7 +7,7 @@ import Navbar from '../../components/Navbar.jsx'
 import Sidebar from '../../components/Sidebar.jsx'
 import { CryptoBadge } from '../../components/CryptoBadge.jsx'
 import { useAuth } from '../../context/AuthContext.jsx'
-import { useApi } from '../../hooks/useApi.jsx'
+import { useApi } from '../../hooks/useApi.js'
 import api from '../../services/api.js'
 
 export default function ChatCaso() {

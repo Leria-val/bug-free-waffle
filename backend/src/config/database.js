@@ -1,35 +1,30 @@
-// Pool de conexão com PostgreSQL (compatível com AWS RDS)
 // src/config/database.js
-// Pool de conexão com PostgreSQL (compatível com AWS RDS)
-
 const { Pool } = require('pg');
-// Garantiza la lectura por si acaso, aunque se recomienda inicializarlo en server.js
-require('dotenv').config(); 
+require('dotenv').config();
 
-const connString = process.env.DATABASE_URL ? String(process.env.DATABASE_URL).trim() : null;
+// Usa DATABASE_URL se existir, senão monta a partir das variáveis individuais
+const pool = new Pool(
+  process.env.DATABASE_URL
+    ? {
+        connectionString: String(process.env.DATABASE_URL).trim(),
+        ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+      }
+    : {
+        host:     process.env.DB_HOST     || 'localhost',
+        port:     Number(process.env.DB_PORT) || 5432,
+        database: process.env.DB_NAME     || 'justica_direito',
+        user:     process.env.DB_USER     || 'postgres',
+        password: String(process.env.DB_PASSWORD || ''),
+        ssl: false,
+      }
+);
 
-if (!connString) {
-  console.error('\n[🚨 CRÍTICO] DATABASE_URL não foi definida no arquivo .env!\n');
-}
-
-const pool = new Pool({
-  connectionString: connString,
-  // AWS RDS requiere SSL con rejectUnauthorized: false en entornos externos (de producción/render)
-  ssl: process.env.NODE_ENV === 'production'
-    ? { rejectUnauthorized: false }
-    : false,
-  max: 20,
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 5000, // Subido a 5s para dar margen a AWS en el handshake inicial
-});
-
-// Verificación de conexión inicial con el Pool
 pool.connect((err, client, release) => {
   if (err) {
-    console.error('Erro ao conectar ao PostgreSQL:', err.message);
-    console.error('Verifique se a senha ou a URL no .env possuem caracteres especiais não escapados.');
+    console.error('\n Erro ao conectar ao PostgreSQL:', err.message);
+    console.error('   Dica: confirme DB_HOST, DB_PORT, DB_NAME, DB_USER e DB_PASSWORD no .env\n');
   } else {
-    console.log('✅ Conexão com PostgreSQL estabelecida com sucesso (AWS RDS/Local).');
+    console.log(' Conexão com PostgreSQL estabelecida com sucesso.');
     release();
   }
 });
@@ -38,9 +33,8 @@ const query = async (text, params) => {
   const start = Date.now();
   try {
     const result = await pool.query(text, params);
-    const duration = Date.now() - start;
     if (process.env.NODE_ENV === 'development') {
-      console.log(`[DB] Query em ${duration}ms | Linhas: ${result.rowCount}`);
+      console.log(`[DB] Query em ${Date.now() - start}ms | Linhas: ${result.rowCount}`);
     }
     return result;
   } catch (error) {
