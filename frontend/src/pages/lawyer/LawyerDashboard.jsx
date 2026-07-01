@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import Navbar from '../../components/Navbar.jsx'
 import Sidebar from '../../components/Sidebar.jsx'
-import { Stepper } from '../../components/CryptoBadge.jsx'
+import Stepper from '../../components/Stepper.jsx'
 import { useAuth } from '../../context/AuthContext.jsx'
 import { useApi } from '../../hooks/useApi.js'
 

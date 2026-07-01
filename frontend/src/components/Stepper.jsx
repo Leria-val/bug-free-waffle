@@ -65,7 +65,6 @@ function Stepper({ steps, current, onChange, disabled }) {
     </div>
   )
 }
--e
 
 export { Stepper }
 export default Stepper
