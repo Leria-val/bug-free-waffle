@@ -1,69 +1,68 @@
 // src/controllers/advogadoController.js
-// Endpoints PÚBLICOS — usados pela página de Busca de Advogados (sem login)
-// Expõe apenas dados não sigilosos: nome, email profissional, área e bio
+// Endpoints PÚBLICOS — usados pela BuscaAdvogados.jsx (sem login)
 
 const { query } = require('../config/database.js');
 
+// Áreas fixas por advogado (mock estático enquanto não há tabela de especialidades)
+// Chave = email do advogado conforme seeds do schema.sql
+const AREAS_POR_ADVOGADO = {
+  'ricardo@justicaedireito.adv.br': ['Direito Civil', 'Direito Empresarial'],
+  'ana@justicaedireito.adv.br':     ['Direito de Família', 'Direito Criminal'],
+};
+
+const BIO_POR_ADVOGADO = {
+  'ricardo@justicaedireito.adv.br': 'Especialista em contratos e litígios empresariais com mais de 12 anos de experiência.',
+  'ana@justicaedireito.adv.br':     'Atuação em divórcio, guarda de filhos e herança com abordagem humanizada.',
+};
+
 /**
- * GET /api/advogados
- * Lista advogados ativos, com filtro opcional por área de atuação.
- * Query params: ?area=Direito Civil
- *
- * IMPORTANTE: nunca retorna dados de casos, mensagens ou documentos.
- * Esta rota é pública e não passa por authMiddleware.
+ * GET /api/advogados?area=Direito Civil
+ * Lista advogados ativos. Filtro por área feito em memória (sem coluna no BD).
  */
 const getAdvogadosPublico = async (req, res) => {
   const { area } = req.query;
 
   try {
-    let sql = `
-      SELECT u.id, u.name, u.email, u.area_atuacao, u.bio, u.created_at,
-             COUNT(DISTINCT c.id) FILTER (WHERE c.lawyer_id = u.id) AS casos_atendidos
-      FROM users u
-      LEFT JOIN cases c ON c.lawyer_id = u.id
-      WHERE u.role = 'LAWYER' AND u.is_active = TRUE
-    `;
-    const params = [];
+    // Busca só colunas que existem na tabela users do schema.sql
+    const result = await query(
+      `SELECT id, name, email, created_at
+       FROM users
+       WHERE role = 'LAWYER' AND is_active = TRUE
+       ORDER BY name ASC`
+    );
 
-    if (area && area.trim() !== '') {
-      sql += ` AND u.area_atuacao = $1`;
-      params.push(area.trim());
-    }
-
-    sql += ` GROUP BY u.id, u.name, u.email, u.area_atuacao, u.bio, u.created_at ORDER BY u.name ASC`;
-
-    const result = await query(sql, params);
-
-    // Resposta enxuta — nenhum dado sigiloso é exposto aqui
-    const advogados = result.rows.map((adv) => ({
-      id: adv.id,
-      name: adv.name,
-      email: adv.email,
-      area_atuacao: adv.area_atuacao,
-      bio: adv.bio,
-      membro_desde: adv.created_at,
-      casos_atendidos: parseInt(adv.casos_atendidos) || 0,
+    // Enriquece com áreas e bio (mapeamento estático por email)
+    let advogados = result.rows.map(adv => ({
+      id:            adv.id,
+      name:          adv.name,
+      email:         adv.email,
+      areas:         AREAS_POR_ADVOGADO[adv.email] || ['Direito Civil'],
+      bio:           BIO_POR_ADVOGADO[adv.email]   || 'Advogado especializado do escritório Justiça & Direito.',
+      membro_desde:  adv.created_at,
     }));
+
+    // Filtro por área se informado
+    if (area && area.trim() !== '') {
+      advogados = advogados.filter(a => a.areas.includes(area.trim()));
+    }
 
     return res.json({ advogados, total: advogados.length });
 
   } catch (err) {
-    console.error('[ADVOGADOS] Erro ao listar advogados públicos:', err.message);
+    console.error('[ADVOGADOS] Erro:', err.message);
     return res.status(500).json({ error: 'Erro ao buscar advogados.' });
   }
 };
 
 /**
  * GET /api/advogados/:id
- * Perfil público resumido de um advogado específico (prévia do card).
- * Para informações completas e contato direto, o cliente deve logar.
  */
 const getAdvogadoPreview = async (req, res) => {
   const { id } = req.params;
 
   try {
     const result = await query(
-      `SELECT id, name, email, area_atuacao, bio, created_at FROM users
+      `SELECT id, name, email, created_at FROM users
        WHERE id = $1 AND role = 'LAWYER' AND is_active = TRUE`,
       [id]
     );
@@ -72,10 +71,17 @@ const getAdvogadoPreview = async (req, res) => {
       return res.status(404).json({ error: 'Advogado não encontrado.' });
     }
 
-    return res.json({ advogado: result.rows[0] });
+    const adv = result.rows[0];
+    return res.json({
+      advogado: {
+        ...adv,
+        areas: AREAS_POR_ADVOGADO[adv.email] || ['Direito Civil'],
+        bio:   BIO_POR_ADVOGADO[adv.email]   || 'Advogado do escritório Justiça & Direito.',
+      }
+    });
 
   } catch (err) {
-    console.error('[ADVOGADOS] Erro ao buscar advogado:', err.message);
+    console.error('[ADVOGADOS] Erro:', err.message);
     return res.status(500).json({ error: 'Erro ao buscar advogado.' });
   }
 };
