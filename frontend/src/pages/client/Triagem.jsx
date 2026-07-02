@@ -3,11 +3,11 @@
 
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import Navbar from '../../components/Navbar.jsx'
-import Sidebar from '../../components/Sidebar.jsx'
-import { CryptoBadge } from '../../components/CryptoBadge.jsx'
-import { useAuth } from '../../context/AuthContext.jsx'
-import { useApi } from '../../hooks/useApi.js'
+import Navbar from '../../components/Navbar'
+import Sidebar from '../../components/Sidebar'
+import { CryptoBadge } from '../../components/CryptoBadge'
+import { useAuth } from '../../context/AuthContext'
+import { useApi } from '../../hooks/useApi'
 
 const AREAS = [
   'Direito Civil','Direito Criminal','Direito Trabalhista','Direito de Família',
@@ -58,13 +58,13 @@ export default function Triagem() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     try {
-      await post('/triagem', { ...form, email: form.email_contato })
+      await post('/triagem', { nome: form.nome, area_atuacao: form.area_atuacao, resumo_caso: form.resumo_caso, email: form.email_contato })
       setSuccess(true)
       // Mostra o toast por 4 segundos
       setShowToast(true)
       setTimeout(() => setShowToast(false), 4000)
       // Redireciona para o painel após 3.5s
-      setTimeout(() => navigate('/client/dashboard'), 3500)
+      setTimeout(() => navigate('/client/chat'), 3500)
     } catch (_) {
       // erro já capturado pelo useApi
     }
