@@ -13,8 +13,8 @@ export default function Requisicoes() {
   useEffect(() => {
     // Admin vê todos, advogado vê só os seus — o backend filtra por role
     get('/casos').then(r => {
-      if (r.ok) setCases(r.data.cases.filter(c => c.status === 'TRIAGEM'))
-    })
+      setCases((r.cases || []).filter(c => c.status === 'TRIAGEM'))
+    }).catch(() => {})
   }, [])
 
   return (

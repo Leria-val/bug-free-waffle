@@ -3,7 +3,7 @@ import { NavLink } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 
 const CLIENT_LINKS = [
-  { to: '/client/dashboard',  label: 'Meu Painel',    icon: '⊞' },
+  { to: '/client/dashboard',  label: 'Início',         icon: '⊞' },
   { to: '/client/triagem',    label: 'Meu Caso',       icon: '📋' },
   { to: '/client/chat',       label: 'Chat Seguro',    icon: '💬' },
   { to: '/client/documentos', label: 'Arquivos',       icon: '📁' },
@@ -11,18 +11,13 @@ const CLIENT_LINKS = [
 ]
 
 const LAWYER_LINKS = [
-  { to: '/lawyer/dashboard',   label: 'Painel',         icon: '⊞' },
+  { to: '/lawyer/dashboard',   label: 'Início',         icon: '⊞' },
   { to: '/lawyer/requisicoes', label: 'Requisições',    icon: '📬' },
-  { to: '/lawyer/casos',       label: 'Meus Casos',     icon: '📋' },
   { to: '/lawyer/chat',        label: 'Chat Seguro',    icon: '💬' },
-  { to: '/lawyer/arquivos',    label: 'Arquivos',       icon: '📁' },
 ]
 
 const ADMIN_LINKS = [
-  { to: '/admin',              label: 'Painel Admin',   icon: '⊞' },
-  { to: '/admin/usuarios',     label: 'Usuários',       icon: '👤' },
-  { to: '/admin/casos',        label: 'Todos os Casos', icon: '📋' },
-  { to: '/admin/relatorio',    label: 'Relatório',      icon: '📊' },
+  { to: '/admin',              label: 'Início',         icon: '⊞' },
 ]
 
 export default function Sidebar() {

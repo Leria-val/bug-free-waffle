@@ -23,7 +23,7 @@ export default function LawyerDashboard() {
   const [cases, setCases] = useState([])
 
   useEffect(() => {
-    get('/casos').then(r => { if (r.ok) setCases(r.data.cases) })
+    get('/casos').then(r => setCases(r.cases || [])).catch(() => {})
   }, [])
 
   return (

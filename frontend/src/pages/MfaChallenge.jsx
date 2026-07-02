@@ -10,7 +10,7 @@ export default function MfaChallenge() {
   const [code, setCode]       = useState('')
   const [error, setError]     = useState('')
   const [loading, setLoading] = useState(false)
-  const { login }             = useAuth()
+  const { setSession }        = useAuth()
   const navigate              = useNavigate()
   const location              = useLocation()
 
@@ -30,7 +30,7 @@ export default function MfaChallenge() {
     setLoading(true)
     try {
       const res = await api.post('/auth/verify-mfa', { tempToken, mfaCode: code })
-      login(res.data.token, res.data.user)
+      setSession(res.data.token, res.data.user)
       navigate(ROLE_REDIRECT[res.data.user.role] || '/')
     } catch (err) {
       setError(err.response?.data?.error || 'Código inválido.')

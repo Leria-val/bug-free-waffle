@@ -2,21 +2,47 @@
 import { useState, useEffect } from 'react'
 import Navbar from '../../components/Navbar'
 import Sidebar from '../../components/Sidebar'
+import Pagination from '../../components/Pagination.jsx'
 import { useApi } from '../../hooks/useApi.js'
+
+const AREAS_ATUACAO = [
+  'Direito Civil', 'Direito Criminal', 'Direito Trabalhista', 'Direito de Família',
+  'Direito Empresarial', 'Direito Tributário', 'Direito Previdenciário',
+  'Direito do Consumidor', 'Direito Imobiliário', 'Direito Digital',
+]
+
+const PER_PAGE = 8
 
 export default function AdminPanel() {
   const { get, post, patch, loading } = useApi()
   const [usuarios, setUsuarios]       = useState([])
+  const [casos, setCasos]             = useState([])
   const [relatorio, setRelatorio]     = useState(null)
   const [aba, setAba]                 = useState('usuarios')
-  const [form, setForm]               = useState({ name: '', email: '', password: '' })
+  const [form, setForm]               = useState({ name: '', email: '', password: '', area_atuacao: '', bio: '' })
   const [msg, setMsg]                 = useState('')
   const [erro, setErro]               = useState('')
+  const [usuariosPage, setUsuariosPage] = useState(1)
+  const [casosPage, setCasosPage]       = useState(1)
+  const [assigning, setAssigning]       = useState({}) // { [caseId]: lawyer_id selecionado }
 
   useEffect(() => {
     get('/admin/usuarios').then(r => setUsuarios(r.users || [])).catch(() => {})
     get('/admin/relatorio').then(r => setRelatorio(r)).catch(() => {})
+    get('/casos').then(r => setCasos(r.cases || [])).catch(() => {})
   }, [])
+
+  const advogados = usuarios.filter(u => u.role === 'LAWYER' && u.is_active)
+
+  const atribuirAdvogado = async (caseId) => {
+    const lawyer_id = assigning[caseId]
+    if (!lawyer_id) return
+    try {
+      await patch(`/casos/${caseId}/assign`, { lawyer_id })
+      const r = await get('/casos')
+      setCasos(r.cases || [])
+    } catch {}
+  }
 
   const criarAdvogado = async (e) => {
     e.preventDefault()
@@ -24,7 +50,7 @@ export default function AdminPanel() {
     try {
       const r = await post('/admin/advogados', form)
       setMsg(`✅ Advogado ${r.user.name} criado! MFA: ${r.mfa_secret}`)
-      setForm({ name: '', email: '', password: '' })
+      setForm({ name: '', email: '', password: '', area_atuacao: '', bio: '' })
       const r2 = await get('/admin/usuarios')
       setUsuarios(r2.users || [])
     } catch (err) {
@@ -93,9 +119,9 @@ export default function AdminPanel() {
 
           {/* Abas */}
           <div style={{ display: 'flex', gap: 4, marginBottom: 28, borderBottom: '1px solid #222', paddingBottom: 0 }}>
-            {['usuarios', 'criar'].map(a => (
+            {['usuarios', 'criar', 'casos'].map(a => (
               <button key={a} onClick={() => setAba(a)} style={btnStyle(aba === a)}>
-                {a === 'usuarios' ? 'Usuários' : '+ Criar Advogado'}
+                {a === 'usuarios' ? 'Usuários' : a === 'criar' ? '+ Criar Advogado' : 'Casos'}
               </button>
             ))}
           </div>
@@ -112,7 +138,7 @@ export default function AdminPanel() {
                   </tr>
                 </thead>
                 <tbody>
-                  {usuarios.map(u => (
+                  {usuarios.slice((usuariosPage - 1) * PER_PAGE, usuariosPage * PER_PAGE).map(u => (
                     <tr key={u.id} style={{ borderBottom: '1px solid #1a1a1a' }}>
                       <td style={{ padding: '14px 20px', fontSize: 14, color: '#f0ede6' }}>{u.name}</td>
                       <td style={{ padding: '14px 20px', fontSize: 13, color: '#a09880' }}>{u.email}</td>
@@ -150,6 +176,14 @@ export default function AdminPanel() {
             </div>
           )}
 
+          {aba === 'usuarios' && usuarios.length > PER_PAGE && (
+            <Pagination
+              page={usuariosPage}
+              totalPages={Math.ceil(usuarios.length / PER_PAGE)}
+              onChange={setUsuariosPage}
+            />
+          )}
+
           {/* Aba: Criar Advogado */}
           {aba === 'criar' && (
             <div style={{ maxWidth: 520 }}>
@@ -170,6 +204,15 @@ export default function AdminPanel() {
 
                   <label style={labelStyle}>Senha inicial</label>
                   <input style={inputStyle} type="password" value={form.password} onChange={s('password')} placeholder="Mínimo 8 caracteres" minLength={8} required />
+
+                  <label style={labelStyle}>Área de atuação</label>
+                  <select style={inputStyle} value={form.area_atuacao} onChange={s('area_atuacao')} required>
+                    <option value="">Selecione...</option>
+                    {AREAS_ATUACAO.map(a => <option key={a} value={a}>{a}</option>)}
+                  </select>
+
+                  <label style={labelStyle}>Bio pública (opcional)</label>
+                  <textarea style={{ ...inputStyle, minHeight: 80, resize: 'vertical' }} value={form.bio} onChange={s('bio')} placeholder="Breve apresentação exibida na busca pública de advogados" />
 
                   {msg && (
                     <div style={{ padding: '12px 16px', background: 'rgba(26,107,58,0.12)', border: '1px solid #1a6b3a', borderRadius: 6, color: '#66bb6a', fontSize: 13, marginBottom: 16 }}>
@@ -198,6 +241,71 @@ export default function AdminPanel() {
               </div>
             </div>
           )}
+
+          {/* Aba: Casos */}
+          {aba === 'casos' && (() => {
+            const casosPageItems = casos.slice((casosPage - 1) * PER_PAGE, casosPage * PER_PAGE)
+            return (
+              <div>
+                {casos.length === 0 && (
+                  <div className="card" style={{ background: '#111', border: '1px solid #222', borderRadius: 12, textAlign: 'center', padding: 48 }}>
+                    <p style={{ color: '#a09880' }}>Nenhum caso registrado ainda.</p>
+                  </div>
+                )}
+
+                {casosPageItems.map(c => (
+                  <div key={c.id} style={{ background: '#111', border: '1px solid #222', borderRadius: 12, padding: 20, marginBottom: 12 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 16, flexWrap: 'wrap' }}>
+                      <div>
+                        <div style={{ fontFamily: 'Georgia,serif', fontSize: 17, color: '#f0ede6', marginBottom: 4 }}>{c.title_area}</div>
+                        <div style={{ fontSize: 12, color: '#5a5545' }}>
+                          Cliente: {c.client_name} · {c.client_email}
+                          <br />
+                          Status: <span style={{ color: '#d4af37' }}>{c.status}</span>
+                          {c.lawyer_name ? ` · Advogado: ${c.lawyer_name}` : ' · Sem advogado atribuído'}
+                        </div>
+                      </div>
+
+                      {!c.lawyer_name && (
+                        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                          <select
+                            style={{ ...inputStyle, marginBottom: 0, width: 220 }}
+                            value={assigning[c.id] || ''}
+                            onChange={e => setAssigning(a => ({ ...a, [c.id]: e.target.value }))}
+                          >
+                            <option value="">Selecionar advogado...</option>
+                            {advogados.map(a => (
+                              <option key={a.id} value={a.id}>{a.name}</option>
+                            ))}
+                          </select>
+                          <button
+                            onClick={() => atribuirAdvogado(c.id)}
+                            disabled={!assigning[c.id]}
+                            style={{
+                              padding: '9px 18px', borderRadius: 6, border: 'none',
+                              background: assigning[c.id] ? '#d4af37' : '#333',
+                              color: assigning[c.id] ? '#080808' : '#666',
+                              fontSize: 13, fontWeight: 600, cursor: assigning[c.id] ? 'pointer' : 'not-allowed',
+                            }}
+                          >
+                            Atribuir
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+
+                {casos.length > PER_PAGE && (
+                  <Pagination
+                    page={casosPage}
+                    totalPages={Math.ceil(casos.length / PER_PAGE)}
+                    onChange={setCasosPage}
+                  />
+                )}
+              </div>
+            )
+          })()}
         </main>
       </div>
     </div>

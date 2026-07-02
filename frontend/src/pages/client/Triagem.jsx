@@ -58,7 +58,7 @@ export default function Triagem() {
   const handleSubmit = async (e) => {
     e.preventDefault()
     try {
-      await post('/triagem', form)
+      await post('/triagem', { ...form, email: form.email_contato })
       setSuccess(true)
       // Mostra o toast por 4 segundos
       setShowToast(true)

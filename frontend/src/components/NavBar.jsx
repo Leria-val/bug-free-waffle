@@ -58,7 +58,7 @@ export default function Navbar() {
                 to={ROLE_HOME[user.role]}
                 style={{ fontSize: 13, color: 'var(--text-2)', letterSpacing:'0.04em' }}
               >
-                Painel
+                Início
               </Link>
               <div style={{ display:'flex', alignItems:'center', gap: 12 }}>
                 <div style={{ textAlign:'right' }}>

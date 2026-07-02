@@ -50,13 +50,13 @@ const Usuario = {
   /**
    * Cria um novo usuário (ADMIN cria advogados; registro público cria clientes)
    */
-  create: async ({ name, email, password, role, mfa_secret }) => {
+  create: async ({ name, email, password, role, mfa_secret, area_atuacao, bio }) => {
     const passwordHash = await bcrypt.hash(password, 12);
     const result = await query(
-      `INSERT INTO users (name, email, password_hash, role, mfa_secret)
-       VALUES ($1, $2, $3, $4, $5)
-       RETURNING id, name, email, role, created_at`,
-      [name.trim(), email.toLowerCase().trim(), passwordHash, role, mfa_secret || null]
+      `INSERT INTO users (name, email, password_hash, role, mfa_secret, area_atuacao, bio)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
+       RETURNING id, name, email, role, area_atuacao, bio, created_at`,
+      [name.trim(), email.toLowerCase().trim(), passwordHash, role, mfa_secret || null, area_atuacao || null, bio || null]
     );
     return result.rows[0];
   },

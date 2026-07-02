@@ -17,12 +17,12 @@ export default function DocumentUpload() {
   const fileRef                 = useRef()
 
   useEffect(() => {
-    get('/casos').then(r => { if (r.ok) setCases(r.data.cases) })
+    get('/casos').then(r => setCases(r.cases || [])).catch(() => {})
   }, [])
 
   useEffect(() => {
     if (!selectedCase) return
-    get(`/casos/${selectedCase}/documentos`).then(r => { if (r.ok) setDocs(r.data.documents) })
+    get(`/casos/${selectedCase}/documentos`).then(r => setDocs(r.documents || [])).catch(() => {})
   }, [selectedCase])
 
   const handleUpload = async (e) => {
@@ -38,7 +38,7 @@ export default function DocumentUpload() {
       })
       setMsg({ type: 'success', text: `"${file.name}" enviado com sucesso.` })
       // Recarrega lista
-      get(`/casos/${selectedCase}/documentos`).then(r => { if (r.ok) setDocs(r.data.documents) })
+      get(`/casos/${selectedCase}/documentos`).then(r => setDocs(r.documents || [])).catch(() => {})
     } catch {
       setMsg({ type: 'error', text: 'Erro ao enviar o arquivo. Tente novamente.' })
     } finally {

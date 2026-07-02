@@ -28,18 +28,16 @@ export default function ChatCaso() {
 
   useEffect(() => {
     get('/casos').then(r => {
-      if (r.ok) {
-        const valid = r.data.cases.filter(c => c.status !== 'TRIAGEM')
-        setCases(valid)
-        if (!activeId && valid.length > 0) setActive(valid[0].id)
-      }
-    })
+      const valid = (r.cases || []).filter(c => c.status !== 'TRIAGEM')
+      setCases(valid)
+      if (!activeId && valid.length > 0) setActive(valid[0].id)
+    }).catch(() => {})
   }, [])
 
   useEffect(() => {
     if (!activeId) return
-    get(`/casos/${activeId}/mensagens`).then(r => { if (r.ok) setMessages(r.data.messages) })
-    get(`/casos/${activeId}/documentos`).then(r => { if (r.ok) setDocs(r.data.documents) })
+    get(`/casos/${activeId}/mensagens`).then(r => setMessages(r.messages || [])).catch(() => {})
+    get(`/casos/${activeId}/documentos`).then(r => setDocs(r.documents || [])).catch(() => {})
   }, [activeId])
 
   useEffect(() => {

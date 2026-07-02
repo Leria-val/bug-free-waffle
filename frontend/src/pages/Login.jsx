@@ -11,11 +11,24 @@ export default function Login() {
   const [password, setPassword] = useState('')
   const [error, setError]       = useState('')
   const [loading, setLoading]   = useState(false)
-  const { login }               = useAuth()
+  const { setSession }          = useAuth()
   const navigate                = useNavigate()
   const location                = useLocation()
 
   const message = location.state?.message // mensagem vinda de BuscaAdvogados
+
+  // Contas de demonstração — projeto acadêmico, credenciais expostas de propósito
+  const DEMO_ACCOUNTS = [
+    { role: 'Admin',    email: 'admin@justicaedireito.adv.br',   password: 'Senha@123', mfa: '000000' },
+    { role: 'Advogado', email: 'ricardo@justicaedireito.adv.br', password: 'Senha@123', mfa: '112233' },
+    { role: 'Cliente',  email: 'cliente@teste.com',              password: 'Senha@123', mfa: null },
+  ]
+
+  const useDemo = (acc) => {
+    setEmail(acc.email)
+    setPassword(acc.password)
+    setError('')
+  }
 
   const ROLE_REDIRECT = {
     ADMIN:  '/admin',
@@ -41,7 +54,7 @@ export default function Login() {
         navigate('/mfa', { state: { tempToken, mfaCode, email } })
       } else {
         // Cliente → login direto
-        login(token, user)
+        setSession(token, user)
         navigate(ROLE_REDIRECT[user.role] || '/')
       }
     } catch (err) {
@@ -137,6 +150,37 @@ export default function Login() {
         <div style={{ marginTop: 16, textAlign: 'center' }}>
           <p style={{ fontSize: 12, color: 'var(--text-3)' }}>
             Advogados: use seu email <span style={{ color: 'var(--gold-dim)' }}>@justicaedireito.adv.br</span>
+          </p>
+        </div>
+
+        {/* Contas de demonstração — projeto acadêmico */}
+        <div className="card" style={{ marginTop: 24, padding: 20 }}>
+          <div style={{ fontSize: 11, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-3)', marginBottom: 12 }}>
+            Contas de demonstração
+          </div>
+          {DEMO_ACCOUNTS.map(acc => (
+            <div key={acc.email} style={{
+              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+              padding: '8px 0', borderBottom: '1px solid var(--border)', gap: 12,
+            }}>
+              <div style={{ fontSize: 12 }}>
+                <div style={{ color: 'var(--text-1)', fontWeight: 500 }}>{acc.role}</div>
+                <div style={{ color: 'var(--text-3)' }}>
+                  {acc.email} · Senha@123{acc.mfa ? ` · MFA ${acc.mfa}` : ''}
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => useDemo(acc)}
+                className="btn btn-ghost btn-sm"
+                style={{ fontSize: 11, whiteSpace: 'nowrap' }}
+              >
+                Usar
+              </button>
+            </div>
+          ))}
+          <p style={{ fontSize: 11, color: 'var(--text-3)', marginTop: 10 }}>
+            Advogados/Admin: após "Entrar", digite o código MFA mostrado acima na próxima tela.
           </p>
         </div>
       </div>

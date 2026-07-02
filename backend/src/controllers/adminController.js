@@ -28,11 +28,21 @@ const getUsuarios = async (req, res) => {
  * Cria um novo advogado com email profissional da firma
  * Apenas Admin pode criar contas de LAWYER
  */
+const AREAS_ATUACAO = [
+  'Direito Civil', 'Direito Criminal', 'Direito Trabalhista', 'Direito de Família',
+  'Direito Empresarial', 'Direito Tributário', 'Direito Previdenciário',
+  'Direito do Consumidor', 'Direito Imobiliário', 'Direito Digital',
+];
+
 const criarAdvogado = async (req, res) => {
-  const { name, email, password, mfa_secret } = req.body;
+  const { name, email, password, mfa_secret, area_atuacao, bio } = req.body;
 
   if (!name || !email || !password) {
     return res.status(400).json({ error: 'Nome, email e senha são obrigatórios.' });
+  }
+
+  if (!area_atuacao || !AREAS_ATUACAO.includes(area_atuacao)) {
+    return res.status(400).json({ error: 'Selecione uma área de atuação válida para o advogado.' });
   }
 
   // Email deve ser do domínio da firma
@@ -62,6 +72,8 @@ const criarAdvogado = async (req, res) => {
       password,
       role: 'LAWYER',
       mfa_secret: mfa,
+      area_atuacao,
+      bio: bio || null,
     });
 
     console.log(`👤 [ADMIN] Advogado criado: ${novoAdvogado.email} por Admin ${req.user.email}`);

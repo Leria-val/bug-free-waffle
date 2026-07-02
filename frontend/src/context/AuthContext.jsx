@@ -30,6 +30,14 @@ export function AuthProvider({ children }) {
     return data;
   };
 
+  // Commits an already-issued token/user (used by pages that call the API
+  // themselves, e.g. Login.jsx after a non-MFA response, or Register.jsx)
+  const setSession = (token, user) => {
+    localStorage.setItem('jd_token', token);
+    localStorage.setItem('jd_user', JSON.stringify(user));
+    setUser(user);
+  };
+
   const verifyMfa = async (tempToken, mfaCode) => {
     const { data } = await api.post('/auth/verify-mfa', { tempToken, mfaCode });
     localStorage.setItem('jd_token', data.token);
@@ -58,7 +66,7 @@ export function AuthProvider({ children }) {
   const isAuthenticated = !!user;
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, verifyMfa, register, logout, isAdmin, isLawyer, isClient, isAuthenticated }}>
+    <AuthContext.Provider value={{ user, loading, login, verifyMfa, register, setSession, logout, isAdmin, isLawyer, isClient, isAuthenticated }}>
       {children}
     </AuthContext.Provider>
   );

@@ -5,6 +5,7 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import Navbar from '../components/Navbar.jsx'
+import Pagination from '../components/Pagination.jsx'
 import { useAuth } from '../context/AuthContext.jsx'
 import api from '../services/api.js'
 
@@ -27,20 +28,22 @@ export default function BuscaAdvogados() {
   const [filtered, setFiltered]   = useState([])
   const [area, setArea]           = useState('Todas as áreas')
   const [loading, setLoading]     = useState(true)
+  const [page, setPage]           = useState(1)
+  const PER_PAGE = 9
   const { isAuthenticated }       = useAuth()
   const navigate = useNavigate()
 
   useEffect(() => {
     api.get('/advogados')
-      .then(r => { setAdvogados(r.data.lawyers); setFiltered(r.data.lawyers) })
+      .then(r => { setAdvogados(r.data.advogados || []); setFiltered(r.data.advogados || []) })
       .catch(() => {
         // Dados mock para demonstração quando a API não está disponível
         const mock = [
-          { id: '1', name: 'Dr. Ricardo Alves',  areas: ['Direito Civil', 'Direito Empresarial'], bio: 'Especialista em contratos e litígios empresariais com mais de 12 anos de experiência.' },
-          { id: '2', name: 'Dra. Ana Costa',     areas: ['Direito de Família', 'Direito Civil'],  bio: 'Atuação em divórcio, guarda de filhos e processos de herança com abordagem humanizada.' },
-          { id: '3', name: 'Dr. Paulo Mendes',   areas: ['Direito Criminal', 'Direito Digital'],  bio: 'Defesa criminal e casos de crimes cibernéticos. Membro da Comissão de Direito Digital da OAB.' },
-          { id: '4', name: 'Dra. Clara Rocha',   areas: ['Direito Trabalhista'],                  bio: 'Especialista em direito do trabalho, demissões, assédio e direitos do empregado.' },
-          { id: '5', name: 'Dr. Henrique Lima',  areas: ['Direito Tributário', 'Direito Empresarial'], bio: 'Planejamento tributário e recuperação de créditos fiscais para pessoas físicas e jurídicas.' },
+          { id: '1', name: 'Dr. Ricardo Alves',  area_atuacao: 'Direito Civil',          bio: 'Especialista em contratos e litígios empresariais com mais de 12 anos de experiência.' },
+          { id: '2', name: 'Dra. Ana Costa',     area_atuacao: 'Direito de Família',      bio: 'Atuação em divórcio, guarda de filhos e processos de herança com abordagem humanizada.' },
+          { id: '3', name: 'Dr. Paulo Mendes',   area_atuacao: 'Direito Criminal',        bio: 'Defesa criminal e casos de crimes cibernéticos. Membro da Comissão de Direito Digital da OAB.' },
+          { id: '4', name: 'Dra. Clara Rocha',   area_atuacao: 'Direito Trabalhista',     bio: 'Especialista em direito do trabalho, demissões, assédio e direitos do empregado.' },
+          { id: '5', name: 'Dr. Henrique Lima',  area_atuacao: 'Direito Tributário',      bio: 'Planejamento tributário e recuperação de créditos fiscais para pessoas físicas e jurídicas.' },
         ]
         setAdvogados(mock)
         setFiltered(mock)
@@ -53,9 +56,13 @@ export default function BuscaAdvogados() {
     if (area === 'Todas as áreas') {
       setFiltered(advogados)
     } else {
-      setFiltered(advogados.filter(a => a.areas?.includes(area)))
+      setFiltered(advogados.filter(a => a.area_atuacao === area))
     }
+    setPage(1)
   }, [area, advogados])
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PER_PAGE))
+  const pageItems = filtered.slice((page - 1) * PER_PAGE, page * PER_PAGE)
 
   const handleContact = () => {
     if (!isAuthenticated) {
@@ -109,7 +116,7 @@ export default function BuscaAdvogados() {
           </div>
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 20 }}>
-            {filtered.map(adv => (
+            {pageItems.map(adv => (
               <div key={adv.id} className="card" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
                 {/* Avatar + nome */}
@@ -131,11 +138,11 @@ export default function BuscaAdvogados() {
                   </div>
                 </div>
 
-                {/* Áreas (badges) */}
+                {/* Área de atuação (badge) */}
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                  {adv.areas?.map(a => (
-                    <span key={a} className="badge badge-gold" style={{ fontSize: 10 }}>{a}</span>
-                  ))}
+                  {adv.area_atuacao && (
+                    <span className="badge badge-gold" style={{ fontSize: 10 }}>{adv.area_atuacao}</span>
+                  )}
                 </div>
 
                 {/* Bio — prévia, sem informações de contato */}
@@ -168,6 +175,10 @@ export default function BuscaAdvogados() {
               </div>
             ))}
           </div>
+        )}
+
+        {!loading && filtered.length > 0 && (
+          <Pagination page={page} totalPages={totalPages} onChange={setPage} />
         )}
       </div>
     </div>

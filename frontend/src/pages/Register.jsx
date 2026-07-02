@@ -8,7 +8,7 @@ export default function Register() {
   const [form, setForm]       = useState({ name: '', email: '', password: '', confirm: '' })
   const [error, setError]     = useState('')
   const [loading, setLoading] = useState(false)
-  const { login }             = useAuth()
+  const { setSession }        = useAuth()
   const navigate              = useNavigate()
 
   const set = (k) => (e) => setForm(f => ({ ...f, [k]: e.target.value }))
@@ -29,7 +29,7 @@ export default function Register() {
       const res = await api.post('/auth/register', {
         name: form.name, email: form.email, password: form.password,
       })
-      login(res.data.token, res.data.user)
+      setSession(res.data.token, res.data.user)
       navigate('/client/dashboard')
     } catch (err) {
       setError(err.response?.data?.error || 'Erro ao criar conta.')

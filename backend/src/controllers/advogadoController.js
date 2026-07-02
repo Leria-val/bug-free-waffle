@@ -17,25 +17,20 @@ const getAdvogadosPublico = async (req, res) => {
 
   try {
     let sql = `
-      SELECT u.id, u.name, u.email, u.created_at,
-             COUNT(DISTINCT c.title_area) FILTER (WHERE c.lawyer_id = u.id) AS casos_atendidos
+      SELECT u.id, u.name, u.email, u.area_atuacao, u.bio, u.created_at,
+             COUNT(DISTINCT c.id) FILTER (WHERE c.lawyer_id = u.id) AS casos_atendidos
       FROM users u
       LEFT JOIN cases c ON c.lawyer_id = u.id
       WHERE u.role = 'LAWYER' AND u.is_active = TRUE
     `;
     const params = [];
 
-    // Filtro por área: busca advogados que já atuaram nessa área
-    // (na ausência de uma tabela de especialidades, usamos o histórico de casos)
     if (area && area.trim() !== '') {
-      sql += ` AND EXISTS (
-        SELECT 1 FROM cases c2
-        WHERE c2.lawyer_id = u.id AND c2.title_area = $1
-      )`;
+      sql += ` AND u.area_atuacao = $1`;
       params.push(area.trim());
     }
 
-    sql += ` GROUP BY u.id, u.name, u.email, u.created_at ORDER BY u.name ASC`;
+    sql += ` GROUP BY u.id, u.name, u.email, u.area_atuacao, u.bio, u.created_at ORDER BY u.name ASC`;
 
     const result = await query(sql, params);
 
@@ -44,6 +39,8 @@ const getAdvogadosPublico = async (req, res) => {
       id: adv.id,
       name: adv.name,
       email: adv.email,
+      area_atuacao: adv.area_atuacao,
+      bio: adv.bio,
       membro_desde: adv.created_at,
       casos_atendidos: parseInt(adv.casos_atendidos) || 0,
     }));
@@ -66,7 +63,7 @@ const getAdvogadoPreview = async (req, res) => {
 
   try {
     const result = await query(
-      `SELECT id, name, email, created_at FROM users
+      `SELECT id, name, email, area_atuacao, bio, created_at FROM users
        WHERE id = $1 AND role = 'LAWYER' AND is_active = TRUE`,
       [id]
     );

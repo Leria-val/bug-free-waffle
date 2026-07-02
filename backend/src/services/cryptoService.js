@@ -5,8 +5,19 @@ const crypto = require('crypto');
 require('dotenv').config();
 
 const ALGORITHM = 'aes-256-cbc';
-// A chave deve ter exatamente 32 bytes
-const KEY = Buffer.from(process.env.AES_KEY || '0'.repeat(64), 'hex');
+// A chave deve ter exatamente 32 bytes (64 caracteres hexadecimais)
+const rawKey = process.env.AES_KEY;
+
+if (!rawKey || Buffer.from(rawKey, 'hex').length !== 32) {
+  console.error(
+    '\n❌ [CRYPTO] AES_KEY ausente ou inválida no .env — deve ser uma string hexadecimal de 64 caracteres (32 bytes).' +
+    '\n   Gere uma nova com: node -e "console.log(require(\'crypto\').randomBytes(32).toString(\'hex\'))"' +
+    '\n   e coloque em backend/.env como: AES_KEY=<valor gerado>\n'
+  );
+  process.exit(1);
+}
+
+const KEY = Buffer.from(rawKey, 'hex');
 
 /**
  * Criptografa um texto limpo usando AES-256-CBC.
